@@ -1,0 +1,6 @@
+{
+    "name": "My Dev Container",
+    "image": "auth0-vue-01-login:latest",
+    "forwardPorts": [3000],
+    "postCreateCommand": "npm install"
+}

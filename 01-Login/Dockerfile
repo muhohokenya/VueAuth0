@@ -15,22 +15,37 @@ COPY . .
 
 RUN npm run build
 
-# ---------------
+# Runtime stage
+FROM nginx:alpine
 
-FROM node:16-alpine
+# Install gettext package which provides envsubst
+RUN apk add --no-cache gettext
+# Configure Nginx
+COPY --from=build /app/dist /usr/share/nginx/html
+RUN mkdir -p /usr/share/nginx/html/config
+COPY src/config/config.js /usr/share/nginx/html/config
+COPY entrypoint.sh /entrypoint.sh
+# Copy the JavaScript template file
+COPY config.js.template /usr/share/nginx/html/
 
-RUN mkdir -p /app/dist
+# Add a script to replace environment variables
+COPY substitute_env.sh /usr/share/nginx/html/
 
-WORKDIR /app
+# Grant execution permissions to the script
+RUN chmod +x /usr/share/nginx/html/substitute_env.sh
 
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json .
-COPY --from=build /app/web-server.js .
+ENV VUE_APP_VERSION = ""
+ENV API_URL=""
+ENV API_KEY=""
+ENV APP_VERSION=""
+# Expose port for Nginx
+EXPOSE 80
+RUN chmod +x /entrypoint.sh
+#ENTRYPOINT ["/entrypoint.sh"]x
 
-ENV NODE_ENV production
 
-RUN npm install --production
+## Start Nginx
+#CMD ["nginx", "-g", "daemon off;"]
 
-EXPOSE 3000
-
-CMD ["node", "web-server.js"]
+# Use /bin/sh instead of /bin/bash
+CMD ["/bin/sh", "-c", "/usr/share/nginx/html/substitute_env.sh && nginx -g 'daemon off;'"]

@@ -1,0 +1,5 @@
+window.config = {
+    apiUrl: '${API_URL}',
+    apiKey: '${API_KEY}',
+    appVersion: '${APP_VERSION}'
+};
